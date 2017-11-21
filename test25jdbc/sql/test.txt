@@ -1,0 +1,26 @@
+create user test identified by hi123456;
+grant connect,resource to test ;
+
+drop user test ;
+------------------------------------------
+create table test(
+num number primary key,
+name varchar2(20)
+);
+
+drop table test;
+------------------------------------------
+
+drop sequence seq_test_num;
+create sequence seq_test_num;
+------------------------------------------
+
+insert into test(num,name) values(seq_test_num.nextval,'kim');
+
+update test set name='lee' where num = 2;
+
+delete from test where num = 2;
+------------------------------------------
+select * from test;
+
+select * from test where num=12;

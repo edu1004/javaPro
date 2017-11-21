@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<title>Golf Score & Game</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet"
+	href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<link rel="shortcut icon" href="./logo.ico">
+<script
+	src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script
+	src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<script src="./bootbox.min.js"></script>
+<style>
+th, td {
+	text-align: center
+}
+
+col:nth-child(odd) {
+	width: 2em;
+	background-color: #eeeedd;
+}
+
+td {
+	background-color: #ddffdd
+}
+
+td:nth-child(1) {
+	background-color: #eed;
+}
+
+th:nth-child(1) {
+	min-width: 70px;
+}
+
+th:nth-last-child(1) {
+	min-width: 70px;
+}
+
+td:nth-last-child(1) {
+	font-size: 20pt;
+}
+
+.hole {
+	width: 3em;
+	padding: 0px;
+	margin: 0px;
+}
+
+.doublePan {
+	background-color: #ff0000;
+}
+
+.role {
+	color: #ff0000;
+}
+
+.top {
+	margin-top: 300px;
+	text-align: right;
+}
+</style>
+
+<script>
+	//  테스팅용 더미 점수
+	// 	var score1 = "1,1,0,3,2,1,3,1,1,0,4,1,2,1,1,4,0,1";
+	// 	var score2 = "2,1,0,1,1,0,2,3,0,3,3,0,1,3,2,2,2,1";
+	// 	var score3 = "2,2,2,1,0,1,0,2,0,2,2,0,2,1,-1,0,1,3";
+	// 	var score4 = "3,2,0,2,0,1,1,1,1,2,2,2,2,1,2,1,1,2";
+	var holeCount = 18, money = 0, birdie = 0;
+	$(function() {
+
+		if (typeof (Storage) !== "undefined") {
+			moneyChange();
+			birdiePayChange();
+
+			arrayParChangeEvent();
+
+			arrayPlayer01ChangeEvent();
+			arrayPlayer02ChangeEvent();
+			arrayPlayer03ChangeEvent();
+			arrayPlayer04ChangeEvent();
+
+			moneyCal();
+		} else {
+			$("h1").text("Sorry! No Web Storage support..");
+		}
+
+		function moneyCal() {
+			let scores = [ localStorage.arrayPlayer01.split(","),
+					localStorage.arrayPlayer02.split(","),
+					localStorage.arrayPlayer03.split(","),
+					localStorage.arrayPlayer04.split(",") ];
+			// 			//console.log("======================================");
+			// 	        for (var x = 0; x < scores.length; x++) {
+			// 	            for (var i = 0; i < scores[x].length; i++) {
+			// 	                    //console.log(scores[x][i]);
+			// 	            }
+			// 	            //console.log("====");
+			// 	        }
+			// 	        //console.log("======================================");
+
+			// 더블판 체크 저장용 배열생성//////////////////////////////
+			let tripleNbirdie = new Array(18);
+			let doublePan = new Array(18);
+			// 더블판 발생홀 체크/////
+			for (var x = 0; x < holeCount; x++) {
+				for (var i = 0; i < 4; i++) {
+					if (scores[i][x] >= 3) {
+						tripleNbirdie[x] = true;
+						break;
+					}
+					if (scores[i][x] < 0) {
+						tripleNbirdie[x] = true;
+						break;
+					}
+				}
+			}
+
+			//더블판 적용홀 배열생성
+			for (var i = 0; i < tripleNbirdie.length; i++) {
+				if (i == 0)
+					continue;
+				if (tripleNbirdie[i - 1] == true)
+					doublePan[i] = true;
+			}
+			// 			for (var i = 0; i < tripleNbirdie.length; i++) {
+			// 				//console.log(tripleNbirdie[i]);
+			// 			}
+			// 			//console.log("============================");
+			// 			for (var i = 0; i < doublePan.length; i++) {
+			// 				//console.log(doublePan[i]);
+
+			// 			}
+			// 			//console.log("============================");
+			////////더블판 체크끝//////////////////
+
+			////계산 순서배열/////
+			var temps = [ [ 1, 2, 3 ], [ 2, 3, 0 ], [ 3, 0, 1 ], [ 0, 1, 2 ] ];
+			//////////////////////////////////////////
+			var players = [ 0, 0, 0, 0 ];
+			for (var y = 0; y < players.length; y++) {
+
+				for (var x = 0; x < 18; x++) {
+					let message = "[민판]";
+					if (doublePan[x]) {
+						message = "[배판]";
+						money = Number.parseInt($("#money").val())*2;
+					} else {
+						money = Number.parseInt($("#money").val());
+					}
+					if (doublePan[x]) {
+						$("tr:eq(2) th:eq(" + x + ")").next().addClass(
+								"doublePan");
+					} else {
+						$("tr:eq(2) th:eq(" + x + ")").next().removeClass(
+								"doublePan");
+					}
+
+					for (var i = 0; i < 3; i++) {
+						var minus = Number.parseInt(scores[y][x])
+								- Number.parseInt(scores[temps[y][i]][x]);
+						//console.log("minus:" + minus);
+						if (minus < 0) {
+							//console.log(minus * -money + "\t");
+							players[y] += minus * -money;
+						}
+						if (minus > 0) {
+							//console.log(minus * -money + "\t");
+							players[y] -= minus * money;
+						}
+						if (scores[y][x] == -1) {
+							//console.log(birdie);
+							players[y] += Number.parseInt($("#birdiePay").val());
+						}
+						if (scores[temps[y][i]][x] == -1) {
+							//console.log(-birdie);
+							players[y] -= Number.parseInt($("#birdiePay").val());
+						}
+					}
+
+					//console.log();
+					//console.log(message);
+					//console.log(x + 1 + "-hole" + "[players[" + (y + 1) + "]:"+ players[y] + "]");
+					//console.log("------------------------------------");
+					$("#p" + (y + 1) + "money").text(players[y]);
+
+				}
+			}//각각 계산 끝
+			let moneyTotal = 0;
+			for (var y = 0; y < players.length; y++) {
+				moneyTotal += players[y];
+			}
+			$("#moneyTotal").text(moneyTotal);
+
+		}
+
+		function arrayPlayer01ChangeEvent() {
+			let arr;
+			if (localStorage.arrayPlayer01) {
+				arr = localStorage.arrayPlayer01.split(",");
+			} else {
+				localStorage.arrayPlayer01 = "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0";
+				// 				localStorage.arrayPlayer01 = score1;
+				arr = localStorage.arrayPlayer01.split(",");
+			}
+			for (var i = 0; i < 18; i++) {
+				$("#p1h" + (i + 1)).val(
+						localStorage.arrayPlayer01.split(",")[i]).change();
+			}
+			var sum = 72;
+			for (var x = 0; x < 18; x++) {
+				sum += Number.parseInt($("#p1h" + (x + 1)).val());
+				$("#p1h" + (x + 1)).change(function() {
+					sum = 72;
+					//console.log($(this).val());
+					for (var i = 0; i < 18; i++) {
+						sum += Number.parseInt($("#p1h" + (i + 1)).val());
+						arr[i] = $("#p1h" + (i + 1)).val();
+					}
+					//console.log("sum:" + sum);
+					$("#p1Sum").text(sum);
+
+					//console.log($(this).val());
+					localStorage.arrayPlayer01 = arr;
+
+					moneyCal();
+				});
+			}
+			//console.log("sum:" + sum);
+			$("#p1Sum").text(sum);
+		}
+		function arrayPlayer02ChangeEvent() {
+			let arr;
+			if (localStorage.arrayPlayer02) {
+				arr = localStorage.arrayPlayer02.split(",");
+			} else {
+				localStorage.arrayPlayer02 = "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0";
+				// 				localStorage.arrayPlayer02 = score2;
+				arr = localStorage.arrayPlayer02.split(",");
+			}
+			for (var i = 0; i < 18; i++) {
+				$("#p2h" + (i + 1)).val(
+						localStorage.arrayPlayer02.split(",")[i]).change();
+			}
+			var sum = 72;
+			for (var x = 0; x < 18; x++) {
+				sum += Number.parseInt($("#p2h" + (x + 1)).val());
+				$("#p2h" + (x + 1)).change(function() {
+					sum = 72;
+					//console.log($(this).val());
+					for (var i = 0; i < 18; i++) {
+						sum += Number.parseInt($("#p2h" + (i + 1)).val());
+						arr[i] = $("#p2h" + (i + 1)).val();
+					}
+					//console.log("sum:" + sum);
+					$("#p2Sum").text(sum);
+
+					//console.log($(this).val());
+					localStorage.arrayPlayer02 = arr;
+					moneyCal();
+				});
+			}
+			//console.log("sum:" + sum);
+			$("#p2Sum").text(sum);
+		}
+
+		function arrayPlayer03ChangeEvent() {
+			let arr;
+			if (localStorage.arrayPlayer03) {
+				arr = localStorage.arrayPlayer03.split(",");
+			} else {
+				localStorage.arrayPlayer03 = "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0";
+				// 				localStorage.arrayPlayer03 = score3;
+				arr = localStorage.arrayPlayer03.split(",");
+			}
+			for (var i = 0; i < 18; i++) {
+				$("#p3h" + (i + 1)).val(
+						localStorage.arrayPlayer03.split(",")[i]).change();
+			}
+			var sum = 72;
+			for (var x = 0; x < 18; x++) {
+				sum += Number.parseInt($("#p3h" + (x + 1)).val());
+				$("#p3h" + (x + 1)).change(function() {
+					sum = 72;
+					//console.log($(this).val());
+					for (var i = 0; i < 18; i++) {
+						sum += Number.parseInt($("#p3h" + (i + 1)).val());
+						arr[i] = $("#p3h" + (i + 1)).val();
+					}
+					//console.log("sum:" + sum);
+					$("#p3Sum").text(sum);
+
+					//console.log($(this).val());
+					localStorage.arrayPlayer03 = arr;
+					moneyCal();
+				});
+			}
+			//console.log("sum:" + sum);
+			$("#p3Sum").text(sum);
+		}
+		function arrayPlayer04ChangeEvent() {
+			let arr;
+			if (localStorage.arrayPlayer04) {
+				arr = localStorage.arrayPlayer04.split(",");
+			} else {
+				localStorage.arrayPlayer04 = "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0";
+				// 				localStorage.arrayPlayer04 = score4;
+				arr = localStorage.arrayPlayer04.split(",");
+			}
+			for (var i = 0; i < 18; i++) {
+				$("#p4h" + (i + 1)).val(
+						localStorage.arrayPlayer04.split(",")[i]).change();
+			}
+			var sum = 72;
+			for (var x = 0; x < 18; x++) {
+				sum += Number.parseInt($("#p4h" + (x + 1)).val());
+				$("#p4h" + (x + 1)).change(function() {
+					sum = 72;
+					//console.log($(this).val());
+					for (var i = 0; i < 18; i++) {
+						sum += Number.parseInt($("#p4h" + (i + 1)).val());
+						arr[i] = $("#p4h" + (i + 1)).val();
+					}
+					//console.log("sum:" + sum);
+					$("#p4Sum").text(sum);
+
+					//console.log($(this).val());
+					localStorage.arrayPlayer04 = arr;
+					moneyCal();
+				});
+			}
+			//console.log("sum:" + sum);
+			$("#p4Sum").text(sum);
+		}
+		
+		$("#money").change(function() {
+			localStorage.money = $("#money").val();
+			moneyCal();
+		});
+		$("#birdiePay").change(function() {
+			localStorage.birdiePay = $("#birdiePay").val();
+			moneyCal();
+		});
+
+		function moneyChange() {
+			if (localStorage.money) {
+				$("#money").val(localStorage.money).change();
+			} else {
+				localStorage.money = "1000";
+			}
+		}
+		function birdiePayChange() {
+			if (localStorage.birdiePay) {
+				$("#birdiePay").val(localStorage.birdiePay).change();
+			} else {
+				localStorage.birdiePay = "3000";
+			}
+		}
+
+		function arrayParChangeEvent() {
+			var arr;
+			if (localStorage.arrayPar) {
+				arr = localStorage.arrayPar.split(",");
+			} else {
+				localStorage.arrayPar = "4,4,5,3,4,4,5,3,4,4,4,5,3,4,4,5,3,4";
+				arr = localStorage.arrayPar.split(",");
+			}
+			for (var i = 0; i < 18; i++) {
+				$("#par" + (i + 1)).val(localStorage.arrayPar.split(",")[i])
+						.change();
+			}
+			var sum = 0;
+			for (var x = 0; x < 18; x++) {
+				sum += Number.parseInt($("#par" + (x + 1)).val());
+				$("#par" + (x + 1)).change(function() {
+					sum = 0;
+					//console.log($(this).val());
+					for (var i = 0; i < 18; i++) {
+						sum += Number.parseInt($("#par" + (i + 1)).val());
+						arr[i] = $("#par" + (i + 1)).val();
+					}
+					//console.log("sum:" + sum);
+					$("#parSum").text(sum);
+
+					//console.log($(this).val());
+					localStorage.arrayPar = arr;
+				});
+			}
+			//console.log("sum:" + sum);
+			$("#parSum").text(sum);
+		}
+
+		$(".openPrompt").on("click", function() {
+			bootbox.prompt({
+				title : "숫자들 사이에 띄어쓰기하시고 18개 입력후 엔터",
+				inputType : 'textarea',
+				callback : function(result) {
+					let ps = result.split("\n");
+					if (ps.length == 4) {
+						for (var x = 0; x < ps.length; x++) {
+							// 			    			ps[x] = ps[x].replace(/\\s/,",");
+							let temp = ps[x].split(",");
+							if (temp.length == 18) {
+								console.log(temp);
+								for (var i = 0; i < temp.length; i++) {
+									if (temp[i].trim().length == 0) {
+										alert("누락된 점수가 있습니다.");
+										x = 4;
+										break;
+									} else {
+										localStorage.arrayPlayer01 = ps[0];
+										localStorage.arrayPlayer02 = ps[1];
+										localStorage.arrayPlayer03 = ps[2];
+										localStorage.arrayPlayer04 = ps[3];
+									}
+								}
+							} else {
+								alert("누락또는 너무 많은 점수가 있습니다.");
+								break;
+							}
+						}
+
+					} else {
+						alert("누락된 사람이 있습니다.");
+						return;
+					}
+
+					// 			    	console.log(localStorage.arrayPlayer01);
+					// 			    	console.log(localStorage.arrayPlayer02);
+					// 			    	console.log(localStorage.arrayPlayer03);
+					// 			    	console.log(localStorage.arrayPlayer04);
+ 					location.reload();
+					moneyCal();
+
+				}
+			});
+		});
+		
+		$(".btn-link").on("click",function(){
+			localStorage.clear();
+			location.reload();
+		});
+
+	});
+</script>
+</head>
+<body>
+	<div class="container">
+		<img alt="Golf Score & Game" src="./golf57_57.png">
+		<a href="./gscore.html" class="btn btn-primary">트리플,버디</a>
+		<a href="./gscore2.html" class="btn btn-success">Par3,Par5</a>
+		<p>**<span class="role">[트리플이상이거나 버디]</span> 스코어 카드를 입력하시면 결과가 나옵니다.</p>
+		금액 :
+				<select id="money">
+						<option>1000</option>
+						<option>2000</option>
+						<option>3000</option>
+						<option>4000</option>
+						<option>5000</option>
+						<option>6000</option>
+						<option>7000</option>
+						<option>8000</option>
+						<option>10000</option>
+						<option>20000</option>
+				</select>
+				&nbsp;&nbsp;버디 값 :
+				<select id="birdiePay">
+						<option>3000</option>
+						<option>5000</option>
+						<option>10000</option>
+						<option>20000</option>
+						<option>30000</option>
+						<option>40000</option>
+						<option>50000</option>
+				</select>
+				&nbsp;&nbsp;<button type="button" class="btn btn-link">초기화</button>
+		<p>
+			**경기 룰 : 이전 홀 경기 결과가 <span class="role">트리플이상이거나 버디</span>가 나오면 해당홀은
+			<span class="role">더블판</span>입니다.
+		</p>
+		<table class="table">
+			<colgroup>
+				<col>
+				<col>
+				<col>
+				<col>
+				<col>
+				<col>
+				<col>
+				<col>
+				<col>
+				<col>
+				<col>
+				<col>
+				<col>
+				<col>
+				<col>
+				<col>
+				<col>
+				<col>
+				<col>
+				<col>
+			</colgroup>
+			<thead>
+				<tr>
+					<th>이 름</th>
+					<th>1</th>
+					<th>2</th>
+					<th>3</th>
+					<th>4</th>
+					<th>5</th>
+					<th>6</th>
+					<th>7</th>
+					<th>8</th>
+					<th>9</th>
+					<th>10</th>
+					<th>11</th>
+					<th>12</th>
+					<th>13</th>
+					<th>14</th>
+					<th>15</th>
+					<th>16</th>
+					<th>17</th>
+					<th>18</th>
+					<th>합계</th>
+				</tr>
+				<tr>
+					<th>홀</th>
+					<th>1H</th>
+					<th>2H</th>
+					<th>3H</th>
+					<th>4H</th>
+					<th>5H</th>
+					<th>6H</th>
+					<th>7H</th>
+					<th>8H</th>
+					<th>9H</th>
+					<th>1H</th>
+					<th>2H</th>
+					<th>3H</th>
+					<th>4H</th>
+					<th>5H</th>
+					<th>6H</th>
+					<th>7H</th>
+					<th>8H</th>
+					<th>9H</th>
+					<th></th>
+				</tr>
+				<tr>
+					<th>Par</th>
+					<th><select class="form-control hole" id="par1">
+							<option value="4">4</option>
+							<option value="3">3</option>
+							<option value="5">5</option>
+					</select></th>
+					<th><select class="form-control hole" id="par2">
+							<option value="4">4</option>
+							<option value="3">3</option>
+							<option value="5">5</option>
+					</select></th>
+					<th><select class="form-control hole" id="par3">
+							<option value="5">5</option>
+							<option value="4">4</option>
+							<option value="3">3</option>
+					</select></th>
+					<th><select class="form-control hole" id="par4">
+							<option value="4">4</option>
+							<option value="3">3</option>
+							<option value="5">5</option>
+					</select></th>
+					<th><select class="form-control hole" id="par5">
+							<option value="4">4</option>
+							<option value="3">3</option>
+							<option value="5">5</option>
+					</select></th>
+					<th><select class="form-control hole" id="par6">
+							<option>4</option>
+							<option>3</option>
+							<option>5</option>
+					</select></th>
+					<th><select class="form-control hole" id="par7">
+							<option value="4">4</option>
+							<option value="3">3</option>
+							<option value="5">5</option>
+					</select></th>
+					<th><select class="form-control hole" id="par8">
+							<option value="4">4</option>
+							<option value="3">3</option>
+							<option value="5">5</option>
+					</select></th>
+					<th><select class="form-control hole" id="par9">
+							<option value="4">4</option>
+							<option value="3">3</option>
+							<option value="5">5</option>
+					</select></th>
+					<th><select class="form-control hole" id="par10">
+							<option value="4">4</option>
+							<option value="3">3</option>
+							<option value="5">5</option>
+					</select></th>
+					<th><select class="form-control hole" id="par11">
+							<option value="4">4</option>
+							<option value="3">3</option>
+							<option value="5">5</option>
+					</select></th>
+					<th><select class="form-control hole" id="par12">
+							<option value="4">4</option>
+							<option value="3">3</option>
+							<option value="5">5</option>
+					</select></th>
+					<th><select class="form-control hole" id="par13">
+							<option value="4">4</option>
+							<option value="3">3</option>
+							<option value="5">5</option>
+					</select></th>
+					<th><select class="form-control hole" id="par14">
+							<option value="4">4</option>
+							<option value="3">3</option>
+							<option value="5">5</option>
+					</select></th>
+					<th><select class="form-control hole" id="par15">
+							<option value="4">4</option>
+							<option value="3">3</option>
+							<option value="5">5</option>
+					</select></th>
+					<th><select class="form-control hole" id="par16">
+							<option value="4">4</option>
+							<option value="3">3</option>
+							<option value="5">5</option>
+					</select></th>
+					<th><select class="form-control hole" id="par17">
+							<option value="4">4</option>
+							<option value="3">3</option>
+							<option value="5">5</option>
+					</select></th>
+					<th><select class="form-control hole" id="par18">
+							<option value="4">4</option>
+							<option value="3">3</option>
+							<option value="5">5</option>
+					</select></th>
+					<th id="parSum">72</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>프로1<br /> <span id="p1money"></span></td>
+					<td><select class="form-control hole" id="p1h1">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p1h2">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p1h3">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p1h4">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p1h5">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p1h6">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p1h7">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p1h8">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p1h9">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p1h10">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p1h11">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p1h12">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p1h13">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p1h14">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p1h15">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p1h16">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p1h17">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p1h18">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td id="p1Sum">72</td>
+				</tr>
+				<tr>
+					<td>프로2<br /> <span id="p2money"></span></td>
+					<td><select class="form-control hole" id="p2h1">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p2h2">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p2h3">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p2h4">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p2h5">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p2h6">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p2h7">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p2h8">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p2h9">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p2h10">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p2h11">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p2h12">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p2h13">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p2h14">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p2h15">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p2h16">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p2h17">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p2h18">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td id="p2Sum">72</td>
+				</tr>
+				<tr>
+					<td>프로3<br /> <span id="p3money"></span></td>
+					<td><select class="form-control hole" id="p3h1">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p3h2">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p3h3">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p3h4">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p3h5">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p3h6">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p3h7">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p3h8">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p3h9">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p3h10">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p3h11">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p3h12">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p3h13">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p3h14">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p3h15">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p3h16">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p3h17">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p3h18">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td id="p3Sum">72</td>
+				</tr>
+				<tr>
+					<td>프로4<br /> <span id="p4money"></span></td>
+					<td><select class="form-control hole" id="p4h1">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p4h2">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p4h3">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p4h4">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p4h5">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p4h6">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p4h7">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p4h8">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p4h9">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p4h10">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p4h11">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p4h12">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p4h13">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p4h14">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p4h15">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p4h16">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p4h17">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td><select class="form-control hole" id="p4h18">
+							<option>0</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>5</option>
+							<option>-1</option>
+							<option>-2</option>
+							<option>-3</option>
+					</select></td>
+					<td id="p4Sum">72</td>
+				</tr>
+
+			</tbody>
+		</table>
+		<p>
+			최종 합산한 금액은 :<span id="moneyTotal"></span>원 입니다.
+		</p>
+		<p>**점수계산이외의 어떤 정보도 수집하지 않습니다.</p>
+	</div>
+	<div class="footer">
+		<div class="container">
+			<div class="row">
+				<div class="col-md-7 widget">
+					<h2>How to use</h2>
+					<article class="widget_content">
+						<ul>
+							<li>트리플 버디 게임은 Par3~5 설정하지 않아도 정산됩니다.</li>
+							<li>차후 다양한 게임 방식에 따라서 경기 방식 옵션을 추가할 예정입니다.</li>
+							<li><button type="button"
+									class="btn btn-default navbar-btn openPrompt">빠른입력</button></li>
+						</ul>
+					</article>
+				</div>
+				<div class="col-md-5 widget">
+					<h2>Contact Us</h2>
+					<article class="widget_content">
+						<p>
+							yangssem88@gmail.com<br>Phone: +82 010 3858 9494
+						</p>
+					</article>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="footer-bottom">
+		<div class="container">
+			<div class="row">
+				<div class="col-md-12 widget">© 2017-08-04 | Created by
+					yangssem88</div>
+			</div>
+
+			<div class="top">
+				<a href="#top">TOP</a>
+			</div>
+		</div>
+	</div>
+
+</body>
+</html>
