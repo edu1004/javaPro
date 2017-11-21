@@ -8,8 +8,11 @@ https://git-scm.com/download/win
 
 >> install >> MINGW64(cmd.exe) >> finish
 
-Open MINGW64(cmd.exe)  >>
 
+#Open MINGW64(cmd.exe)  
+#>> C:\Program Files\Git>git-bash
+-------------------------------------------------
+Administrator@MSDN-SPECIAL MINGW64 /
 
 git --version
 
@@ -62,3 +65,5 @@ git commit -m "second commit"
 
 
 git push -u javaPro master
+
+-------------------------------------------------
